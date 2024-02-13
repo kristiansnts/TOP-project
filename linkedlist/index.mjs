@@ -1,0 +1,25 @@
+import LinkedList from "./Modules/LinkedList.js";
+
+const listOne = new LinkedList('List One');
+
+console.log(listOne.find('New Node'))
+listOne.append('Node 1')
+listOne.append('Node 2')
+listOne.prepend('New Head')
+console.log(listOne.toString())
+console.log(listOne.size())
+console.log(listOne.tail())
+console.log(listOne.at(1))
+listOne.pop()
+console.log(listOne.toString())
+listOne.pop()
+console.log(listOne.toString())
+console.log(listOne.contains('Node 2'))
+listOne.contains('New Head')
+listOne.append('New Node')
+console.log(listOne.find('New Node'))
+listOne.insertAt('Middle Node', 1)
+listOne.append('Node 2')
+console.log(listOne.toString())
+listOne.removeAt(1)
+console.log(listOne.toString())
