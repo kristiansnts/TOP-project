@@ -1,97 +1,175 @@
 class HashMap {
     constructor(size = 16) {
-        this.bucket = new Array(size)
-        this.size = size
-        this.entries = 0
+        this.bucket = new Array(size);
+        this.size = size;
+        this.entriesCount = 0;
+        this.loadFactor = 0.75;
     }
 
     hash(key) {
-        let hashCode = 0
-        const primeNumber = 31
+        let hashCode = 0;
+        const primeNumber = 31;
 
-        for(let i = 0; i < key.length; i++) {
-            hashCode = (primeNumber * hashCode + key.charCodeAt(i)) % 17
+        for (let i = 0; i < key.length; i++) {
+            hashCode = (primeNumber * hashCode + key.charCodeAt(i)) % this.size;
         }
 
-        return hashCode
-    }
-
-    access(index) {
-        if(index < 0 || index >= this.bucket.length) {
-            throw new Error ("Trying to access index out of bound")
-        }
+        return hashCode;
     }
 
     set(key, value) {
-        let index = this.hash(key)
-        this.access(index)
-        if(!this.bucket[index]) {
-            this.bucket[index] = []
+        let index = this.hash(key);
+        if (!this.bucket[index]) {
+            this.bucket[index] = [];
         }
-        let bucket = this.bucket[index]
-        for(let i = 0; i < bucket.length; i++) {
-            if(bucket[i][0] === key) {
-                bucket[i][1] = value
-                return
+
+        let bucket = this.bucket[index];
+        for (let i = 0; i < bucket.length; i++) {
+            if (bucket[i][0] === key) {
+                bucket[i][1] = value;
+                return;
             }
         }
-        bucket.push([key, value])
-        this.entries++
+
+        bucket.push([key, value]);
+        this.entriesCount++;
+
+        if (this.entriesCount / this.size >= this.loadFactor) {
+            this.grow();
+        }
     }
 
     get(key) {
-        const index = this.has(key)
-        this.access(index)
-        return this.bucket[index] || null
+        let index = this.hash(key);
+        let bucket = this.bucket[index];
+        if (bucket) {
+            for (let i = 0; i < bucket.length; i++) {
+                if (bucket[i][0] === key) {
+                    return bucket[i][1];
+                }
+            }
+        }
+
+        return null;
     }
 
     has(key) {
-        return this.get(key) !== null
+        let index = this.hash(key);
+        let bucket = this.bucket[index];
+        if (bucket) {
+            for (let i = 0; i < bucket.length; i++) {
+                if (bucket[i][0] === key) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     remove(key) {
-        const index = this.has(key)
-        this.access(index)
-        if(!this.bucket[index]) {
-            delete this.bucket[index]
-            this.entries--
-            return true
+        let index = this.hash(key);
+        let bucket = this.bucket[index];
+        if (bucket) {
+            for (let i = 0; i < bucket.length; i++) {
+                if (bucket[i][0] === key) {
+                    bucket.splice(i, 1);
+                    this.entriesCount--;
+                    return true;
+                }
+            }
         }
-        return false
+
+        return false;
     }
 
     length() {
-        return this.entries
+        return this.entriesCount;
     }
 
     clear() {
-        this.bucket = new Array(this.size)
-        this.entries = 0
+        this.bucket = new Array(this.size);
+        this.entriesCount = 0;
     }
 
     keys() {
-        return this.bucket.reduce((keys, value, index) => {
-            if(value !== undefined) {
-                keys.push(index)
+        let keysArray = [];
+        for (let i = 0; i < this.size; i++) {
+            let bucket = this.bucket[i];
+            if (bucket) {
+                for (let j = 0; j < bucket.length; j++) {
+                    keysArray.push(bucket[j][0]);
+                }
             }
-            return keys
-        }, [])
+        }
+
+        return keysArray;
     }
 
     values() {
-        return this.bucket.filter(value => value !== undefined)
-    }
-
-    entries() {
-        return this.bucket.reduce((entries, value, index) => {
-            if(value !== undefined) {
-                entries.push([index, value])
+        let valuesArray = [];
+        for (let i = 0; i < this.size; i++) {
+            let bucket = this.bucket[i];
+            if (bucket) {
+                for (let j = 0; j < bucket.length; j++) {
+                    valuesArray.push(bucket[j][1]);
+                }
             }
-            return entries
-        }, [])
+        }
+
+        return valuesArray;
     }
 
+    allEntries() {
+        let entriesArray = [];
+        for (let i = 0; i < this.size; i++) {
+            let bucket = this.bucket[i];
+            if (bucket) {
+                for (let j = 0; j < bucket.length; j++) {
+                    entriesArray.push([bucket[j][0], bucket[j][1]]);
+                }
+            }
+        }
+
+        return entriesArray;
+    }
+
+    grow() {
+        let newSize = this.size * 2;
+        let newBucket = new Array(newSize);
+
+        for (let i = 0; i < this.size; i++) {
+            let bucket = this.bucket[i];
+            if (bucket) {
+                for (let j = 0; j < bucket.length; j++) {
+                    let key = bucket[j][0];
+                    let value = bucket[j][1];
+                    let newIndex = this.hash(key) % newSize;
+
+                    if (!newBucket[newIndex]) {
+                        newBucket[newIndex] = [];
+                    }
+
+                    newBucket[newIndex].push([key, value]);
+                }
+            }
+        }
+
+        this.bucket = newBucket;
+        this.size = newSize;
+    }
 }
 
-const map1 = new HashMap()
-map1.get();
+// Example usage
+const map = new HashMap();
+map.set('name', 'John');
+map.set('age', 30);
+console.log(map.get('name')); // Output: John
+console.log(map.has('age')); // Output: true
+console.log(map.keys()); // Output: ['name', 'age']
+console.log(map.values()); // Output: ['John', 30]
+console.log(map.allEntries()); // Output: [['name', 'John'], ['age', 30]]
+map.remove('age');
+console.log(map.length()); // Output: 1
+map.clear();
+console.log(map.length()); // Output: 0
